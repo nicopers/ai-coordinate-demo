@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>AIコーディネートの入力画面</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Old+Mincho:wght@500&display=swap">
+<style>
+/* レイアウト：LINEのリッチメニューから開くスマホ1列の申し込み画面。上から「お部屋 → 好み → 暮らし」の順に埋め、下の固定ボタンで送る */
+:root {
+  --paper: #FAF9F6; --ink: #292923; --charcoal: #242622; --sand: #D6C6A9; --blue: #3C6E9A; --mute: #77736A; --line: #E4DDD0; --white: #FFFFFF; --warn: #A0522D; --linegreen: #06C755; --stage: #ECE9E2;
+  --f-head: "Zen Old Mincho", "Yu Mincho", serif; --f-body: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--stage); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.75; }
+.note { max-width: 440px; margin: 0 auto; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 12px; color: var(--mute); display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.note button { font: inherit; font-size: 12px; background: var(--white); border: 1px solid var(--sand); color: var(--ink); padding: 4px 10px; cursor: pointer; }
+.app { max-width: 440px; margin: 0 auto 0; background: var(--paper); min-height: 100%; box-shadow: 0 0 0 1px var(--line); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--charcoal); color: #F3EFE6; display: flex; align-items: center; gap: 10px; padding: 11px 16px; font-size: 13px; }
+.bar b { font-family: var(--f-head); font-weight: 500; letter-spacing: .24em; font-size: 14px; }
+.bar span { margin-left: auto; font-size: 11px; color: #CFC8B9; }
+.prog { height: 3px; background: #3A3B37; }
+.prog i { display: block; height: 100%; width: 0; background: var(--sand); transition: width .3s ease; }
+.hero { padding: 26px 20px 20px; border-bottom: 1px solid var(--line); }
+.hero .en { font-family: Georgia, serif; font-size: 11px; letter-spacing: .3em; color: var(--mute); }
+.hero h1 { font-family: var(--f-head); font-weight: 500; font-size: 23px; line-height: 1.55; letter-spacing: .06em; margin: 6px 0 10px; text-wrap: balance; }
+.hero p { margin: 0; font-size: 13.5px; color: #4A4740; }
+.hero ul { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12.5px; color: var(--mute); }
+.hero li::before { content: "—"; color: var(--sand); margin-right: 8px; }
+form { padding: 4px 20px 120px; }
+fieldset { border: 0; margin: 0; padding: 22px 0 6px; border-bottom: 1px solid var(--line); }
+.sec { font-family: Georgia, serif; font-size: 11px; letter-spacing: .28em; color: var(--blue); margin-top: 18px; }
+.q { display: flex; align-items: baseline; gap: 8px; font-weight: 500; font-size: 15px; margin-bottom: 4px; }
+.q small { font-size: 11px; font-weight: 400; padding: 0 6px; border: 1px solid var(--sand); color: var(--mute); white-space: nowrap; }
+.q small.req { border-color: var(--blue); color: var(--blue); }
+.hint { font-size: 12px; color: var(--mute); margin: 0 0 10px; }
+.drop { display: grid; place-items: center; text-align: center; gap: 4px; border: 1px dashed #BDB29C; background: var(--white); padding: 18px 12px; cursor: pointer; font-size: 13px; color: var(--mute); }
+.drop b { color: var(--ink); font-weight: 500; }
+.drop input { display: none; }
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.thumbs figure { margin: 0; width: 96px; height: 96px; background: var(--white); border: 1px solid var(--line); position: relative; overflow: hidden; }
+.thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumbs button { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border: 0; background: rgba(36,38,34,.75); color: #fff; font-size: 13px; line-height: 22px; padding: 0; cursor: pointer; }
+.size { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 10px; }
+.size label { min-width: 0; display: grid; gap: 4px; font-size: 12px; color: var(--mute); }
+.size .x { padding-bottom: 12px; color: var(--mute); }
+.unit { display: flex; align-items: center; background: var(--white); border: 1px solid #CFC6B5; }
+.unit input { border: 0; background: transparent; font: inherit; font-size: 17px; padding: 9px 10px; width: 100%; min-width: 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+.unit span { padding-right: 10px; color: var(--mute); font-size: 13px; }
+.unit:focus-within, textarea:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 13.5px; background: var(--white); color: var(--ink); border: 1px solid #CFC6B5; padding: 8px 14px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--charcoal); border-color: var(--charcoal); color: #F3EFE6; }
+.chip:focus-visible, .send:focus-visible, .drop:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.ks { display: grid; gap: 10px; margin-top: 14px; }
+.ks:empty { display: none; }
+.ks .row { background: var(--white); border: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 8px; }
+.ks .row b { font-weight: 500; font-size: 13.5px; }
+.ks .row b small { font-weight: 400; color: var(--mute); margin-left: 6px; font-size: 11.5px; }
+.ks .pair { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 8px; align-items: center; }
+.ks .unit input { font-size: 15px; padding: 7px 8px; }
+.ks .one { max-width: 160px; }
+.ks .chip { font-size: 12.5px; padding: 6px 11px; }
+textarea { width: 100%; font: inherit; font-size: 14px; border: 1px solid #CFC6B5; background: var(--white); padding: 10px; resize: vertical; min-height: 70px; margin-top: 10px; color: var(--ink); }
+.err { color: var(--warn); font-size: 12px; margin: 8px 0 0; }
+fieldset.bad .q { color: var(--warn); }
+.foot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.foot .in { max-width: 440px; margin: 0 auto; background: rgba(250,249,246,.96); border-top: 1px solid var(--line); padding-block: 12px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: grid; gap: 6px; }
+.send { font: inherit; font-weight: 700; font-size: 15px; letter-spacing: .08em; background: var(--blue); color: #fff; border: 0; padding: 14px; cursor: pointer; }
+.send[disabled] { background: #A9B6C2; cursor: not-allowed; }
+.foot small { text-align: center; font-size: 11.5px; color: var(--mute); }
+.done { padding: 60px 24px 80px; text-align: center; display: grid; gap: 16px; justify-items: center; }
+.done .mark { width: 56px; height: 56px; border: 1px solid var(--sand); display: grid; place-items: center; font-family: var(--f-head); font-size: 22px; color: var(--blue); }
+.done h2 { font-family: var(--f-head); font-weight: 500; font-size: 21px; letter-spacing: .06em; margin: 0; }
+.done p { margin: 0; font-size: 14px; color: #4A4740; }
+.done dl { margin: 6px 0 0; text-align: left; width: 100%; border-top: 1px solid var(--line); font-size: 13px; }
+.done dl div { display: grid; grid-template-columns: 7.5em 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.done dt { color: var(--mute); } .done dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.done .line { display: inline-block; background: var(--linegreen); color: #fff; font-weight: 700; padding: 12px 34px; text-decoration: none; font-size: 14px; }
+.arw { margin-top: 16px; }
+.arw .lead { font-size: 13px; font-weight: 500; margin: 0 0 2px; }
+.atools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0 10px; }
+.atools .chip { font-size: 12.5px; padding: 6px 11px; }
+.atools .chip::before { content: ""; display: inline-block; width: 16px; height: 2px; vertical-align: middle; margin-right: 7px; background: var(--blue); }
+.atools .chip[data-a="d"]::before { background: var(--warn); }
+.atools .chip[aria-pressed="true"]::before { background: #F3EFE6; }
+.atools .clr { font: inherit; font-size: 12px; background: none; border: 0; color: var(--mute); text-decoration: underline; cursor: pointer; margin-left: auto; padding: 4px 0; }
+.stage { position: relative; background: var(--white); border: 1px solid var(--line); line-height: 0; user-select: none; -webkit-user-select: none; }
+.stage img { width: 100%; height: auto; display: block; pointer-events: none; -webkit-user-drag: none; }
+.stage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.stage.on { touch-action: none; cursor: crosshair; outline: 2px solid var(--blue); outline-offset: -2px; }
+.stage .tip { position: absolute; left: 8px; top: 8px; right: 8px; line-height: 1.5; font-size: 12px; background: rgba(36,38,34,.84); color: #fff; padding: 4px 9px; }
+.abub { line-height: 1.4; background: var(--white); border: 1px solid var(--line); border-top: 0; border-left: 4px solid var(--blue); padding: 9px 10px; display: flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+.abub > span:not(.unit) { color: var(--mute); }
+.abub button { margin-left: auto; }
+.abub b { font-weight: 700; }
+.abub .unit { width: 84px; }
+.abub .unit input { font-size: 16px; padding: 6px 7px; }
+.abub button { font: inherit; font-size: 12.5px; font-weight: 700; background: var(--charcoal); color: #F3EFE6; border: 0; padding: 7px 11px; cursor: pointer; }
+.arw .empty { font-size: 12px; color: var(--mute); background: var(--white); border: 1px dashed #CFC6B5; padding: 14px 12px; margin: 6px 0 0; text-align: center; }
+.sumfig { width: 100%; margin: 0; }
+.sumfig figcaption { font-size: 12px; color: var(--mute); text-align: left; margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { .prog i { transition: none; } }
+</style>
+
+<div class="note"><span>見本です。送っても、どこにも届きません。入れた写真は、この画面の中だけで使います。</span></div>
+
+<div class="app">
+  <div class="bar"><b>nicomade</b><span id="count">0 / 7</span></div>
+  <div class="prog"><i id="bar"></i></div>
+
+  <div id="formView">
+    <section class="hero">
+      <div class="en">AI INTERIOR COORDINATE</div>
+      <h1>間取り図を送ると、<br>インテリアのご提案が届きます。</h1>
+      <p>AIがつくったご提案のたたき台を、nicomadeのスタッフが目を通してから、このLINEにお送りします。</p>
+      <ul><li>無料・入力は3分ほど</li><li>当日〜翌営業日にお届け</li><li>商品名と価格は、ご相談のあとにお出しします</li></ul>
+    </section>
+
+    <form id="f" novalidate>
+      <div class="sec">01 ROOM</div>
+      <fieldset data-k="plan">
+        <div class="q">間取り図<small class="req">必須</small></div>
+        <p class="hint">不動産会社の図面や、スマホで撮った写真で大丈夫です。</p>
+        <label class="drop"><input type="file" id="planIn" accept="image/*,application/pdf"><b>写真を選ぶ</b>またはここにドラッグ</label>
+        <div class="thumbs" id="planTh"></div>
+      </fieldset>
+
+      <fieldset data-k="size">
+        <div class="q">いちばん大きいお部屋の広さ<small class="req">必須</small></div>
+        <p class="hint">ふつうはリビングです。壁から壁まで、だいたいで大丈夫です。</p>
+        <div class="size">
+          <label for="w">幅<span class="unit"><input id="w" inputmode="decimal" placeholder="4.8"><span>m</span></span></label>
+          <span class="x">×</span>
+          <label for="d">奥行<span class="unit"><input id="d" inputmode="decimal" placeholder="3.6"><span>m</span></span></label>
+        </div>
+        <div class="arw">
+          <p class="lead">図面の上に、測ったところを矢印で引いてください</p>
+          <p class="hint">ボタンを押してから、図面を指でなぞります。引いたら、その長さ（m）を入れてください。引かなくても送れます。</p>
+          <p class="empty" id="arEmpty">間取り図を入れると、ここに図面が出ます。</p>
+          <div id="arBox" hidden>
+            <div class="atools">
+              <button type="button" class="chip" data-a="w" aria-pressed="false">幅の矢印を引く</button>
+              <button type="button" class="chip" data-a="d" aria-pressed="false">奥行の矢印を引く</button>
+              <button type="button" class="clr" id="arClr">矢印を消す</button>
+            </div>
+            <div class="stage" id="arStage"><img id="arImg" alt="間取り図"><svg id="arSvg" aria-hidden="true"></svg><div class="tip" id="arTip" hidden></div></div>
+            <div class="abub" id="arBub" hidden><b id="arBubL">幅</b><span>の長さ</span><span class="unit"><input id="arBubIn" inputmode="decimal" placeholder="—" aria-label="矢印の長さ"><span>m</span></span><button type="button" id="arBubOk">OK</button></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="sec">02 TASTE</div>
+      <fieldset data-k="taste">
+        <div class="q">好きなお部屋の写真<small class="req">必須</small></div>
+        <p class="hint">1〜3枚。雑誌やSNSのスクリーンショットでも大丈夫です。</p>
+        <label class="drop"><input type="file" id="tasteIn" accept="image/*" multiple><b>写真を選ぶ</b>3枚まで</label>
+        <div class="thumbs" id="tasteTh"></div>
+      </fieldset>
+
+      <div class="sec">03 LIFE</div>
+      <fieldset data-k="people">
+        <div class="q">住む人数<small class="req">必須</small></div>
+        <div class="chips" data-one>
+          <button type="button" class="chip">1人</button><button type="button" class="chip">2人</button><button type="button" class="chip">3人</button><button type="button" class="chip">4人以上</button>
+        </div>
+      </fieldset>
+
+      <fieldset data-k="budget">
+        <div class="q">家具のご予算<small class="req">必須</small></div>
+        <div class="chips" data-one>
+          <button type="button" class="chip">50万円まで</button><button type="button" class="chip">50〜100万円</button><button type="button" class="chip">100〜200万円</button><button type="button" class="chip">200万円より上</button><button type="button" class="chip">まだ決めていない</button>
+        </div>
+      </fieldset>
+
+      <fieldset data-k="keep">
+        <div class="q">そのまま使う家具<small class="req">必須</small></div>
+        <p class="hint">いくつでも選べます。</p>
+        <div class="chips" data-many>
+          <button type="button" class="chip">テレビ</button><button type="button" class="chip">テレビ台</button><button type="button" class="chip">ソファ</button><button type="button" class="chip">ローテーブル</button><button type="button" class="chip">ダイニングテーブル</button><button type="button" class="chip">ダイニングチェア</button><button type="button" class="chip">ベッド</button><button type="button" class="chip">デスク</button><button type="button" class="chip">デスクチェア</button><button type="button" class="chip">本棚・収納棚</button><button type="button" class="chip">食器棚</button><button type="button" class="chip">チェスト</button><button type="button" class="chip">ドレッサー</button><button type="button" class="chip">ラグ</button><button type="button" class="chip">照明</button><button type="button" class="chip">カーテン</button><button type="button" class="chip">その他</button><button type="button" class="chip" data-none>ない</button>
+        </div>
+        <div id="keepSizes" class="ks"></div>
+      </fieldset>
+
+      <fieldset data-k="when">
+        <div class="q">入居・使い始めの時期<small class="req">必須</small></div>
+        <div class="chips" data-one>
+          <button type="button" class="chip">1か月以内</button><button type="button" class="chip">1〜2か月後</button><button type="button" class="chip">3か月より先</button><button type="button" class="chip">もう住んでいる</button>
+        </div>
+      </fieldset>
+
+      <fieldset data-k="wish" data-opt>
+        <div class="q">いちばん大事にしたいこと<small>任意</small></div>
+        <div class="chips" data-one>
+          <button type="button" class="chip">落ち着ける</button><button type="button" class="chip">広く見せたい</button><button type="button" class="chip">おしゃれに</button><button type="button" class="chip">使いやすさ</button>
+        </div>
+        <label for="memo" class="hint" style="display:block;margin:12px 0 0">ほかに伝えたいこと（ペット・お子さま・在宅ワークなど）</label>
+        <textarea id="memo" placeholder="例：豆柴と暮らしています。"></textarea>
+      </fieldset>
+    </form>
+  </div>
+
+  <div id="doneView" class="done" hidden>
+    <div class="mark">&#10003;</div>
+    <h2>受け付けました</h2>
+    <p>当日〜翌営業日に、<br>このLINEにご提案のたたき台をお送りします。</p>
+    <dl id="sum"></dl>
+    <figure class="sumfig" id="sumFig" hidden></figure>
+    <a class="line" href="#" id="back">LINEに戻る</a>
+  </div>
+</div>
+
+<div class="foot" id="foot"><div class="in">
+  <button class="send" id="send" type="button" disabled>この内容で送る</button>
+  <small id="left">あと7つ入れると送れます</small>
+</div></div>
+
+<script>
+const EX = {fp: "", ts: ""};
+const REQ = ["plan", "size", "taste", "people", "budget", "keep", "when"];
+const files = {plan: [], taste: []};
+const $ = (s, r = document) => r.querySelector(s);
+
+function chosen(k) { return [...document.querySelectorAll(`fieldset[data-k="${k}"] > .chips > .chip[aria-pressed="true"]`)].map(b => b.textContent); }
+function filled(k) {
+  if (k === "plan" || k === "taste") return files[k].length > 0;
+  if (k === "size") return +$("#w").value > 0 && +$("#d").value > 0;
+  return chosen(k).length > 0;
+}
+const sizes = {};
+const BEDS = ["シングル", "セミダブル", "ダブル", "クイーン", "わからない"];
+function renderSizes() {
+  const box = $("#keepSizes");
+  const sel = chosen("keep").filter(x => x !== "ない");
+  box.innerHTML = sel.length ? `<p class="hint" style="margin:0">大きさが分かれば入れてください。分からなければ空けたままで大丈夫です（よくある大きさで描きます）。</p>` : "";
+  sel.forEach(name => {
+    const v = sizes[name] || (sizes[name] = {});
+    const row = document.createElement("div");
+    row.className = "row";
+    if (name === "テレビ") {
+      row.innerHTML = `<b>テレビ<small>画面の大きさ</small></b><span class="unit one"><input inputmode="numeric" placeholder="55" aria-label="テレビの大きさ"><span>型</span></span>`;
+      const i = row.querySelector("input"); i.value = v.inch || ""; i.oninput = () => v.inch = i.value;
+    } else if (name === "ベッド") {
+      row.innerHTML = `<b>ベッド<small>大きさ</small></b><div class="chips">${BEDS.map(s => `<button type="button" class="chip" aria-pressed="${v.bed === s}">${s}</button>`).join("")}</div>`;
+      row.querySelectorAll(".chip").forEach(b => b.onclick = e => { e.stopPropagation(); v.bed = b.textContent; row.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+    } else if (name === "照明" || name === "カーテン") {
+      row.innerHTML = `<b>${name}<small>どこで使うか</small></b><span class="unit"><input placeholder="${name === "照明" ? "例：リビングの天井、フロアランプ" : "例：リビングの掃き出し窓"}" aria-label="${name}をどこで使うか"></span>`;
+      const i = row.querySelector("input"); i.value = v.where || ""; i.oninput = () => v.where = i.value;
+    } else if (name === "ダイニングチェア") {
+      row.innerHTML = `<b>ダイニングチェア<small>脚数</small></b><span class="unit one"><input inputmode="numeric" placeholder="2" aria-label="ダイニングチェアの脚数"><span>脚</span></span>`;
+      const i = row.querySelector("input"); i.value = v.n || ""; i.oninput = () => v.n = i.value;
+    } else if (name === "その他") {
+      row.innerHTML = `<b>その他<small>家具の名前と、幅 × 奥行</small></b><span class="unit"><input placeholder="例：ピアノ、キャットタワー" aria-label="その他の家具の名前"></span><div class="pair"><span class="unit"><input inputmode="numeric" placeholder="幅" aria-label="その他の家具の幅"><span>cm</span></span><span>×</span><span class="unit"><input inputmode="numeric" placeholder="奥行" aria-label="その他の家具の奥行"><span>cm</span></span></div>`;
+      const [t, a, b] = row.querySelectorAll("input"); t.value = v.what || ""; a.value = v.w || ""; b.value = v.d || "";
+      t.oninput = () => v.what = t.value; a.oninput = () => v.w = a.value; b.oninput = () => v.d = b.value;
+    } else {
+      row.innerHTML = `<b>${name}<small>幅 × 奥行</small></b><div class="pair"><span class="unit"><input inputmode="numeric" placeholder="幅" aria-label="${name}の幅"><span>cm</span></span><span>×</span><span class="unit"><input inputmode="numeric" placeholder="奥行" aria-label="${name}の奥行"><span>cm</span></span></div>`;
+      const [a, b] = row.querySelectorAll("input"); a.value = v.w || ""; b.value = v.d || "";
+      a.oninput = () => v.w = a.value; b.oninput = () => v.d = b.value;
+    }
+    box.appendChild(row);
+  });
+}
+function sizeText(name) {
+  const v = sizes[name] || {};
+  if (name === "テレビ") return v.inch ? `テレビ（${v.inch}型）` : "テレビ";
+  if (name === "ベッド") return v.bed && v.bed !== "わからない" ? `ベッド（${v.bed}）` : "ベッド";
+  if (name === "照明" || name === "カーテン") return v.where ? `${name}（${v.where}）` : name;
+  if (name === "ダイニングチェア") return v.n ? `ダイニングチェア（${v.n}脚）` : name;
+  if (name === "その他") { const nm = v.what || "その他"; return v.w && v.d ? `${nm}（${v.w}×${v.d}cm）` : nm; }
+  return v.w && v.d ? `${name}（${v.w}×${v.d}cm）` : name;
+}
+/* 図面の上の矢印。座標は図面の幅・高さに対する割合（0〜1）で持つ */
+const arrows = {w: null, d: null};
+const nat = {w: 0, h: 0};
+let arMode = null, drawing = null, arSrc = "";
+const AR_COLOR = {w: "#3C6E9A", d: "#A0522D"};
+function arLabel(k) { const v = $(k === "w" ? "#w" : "#d").value; return (k === "w" ? "幅" : "奥行") + (+v > 0 ? ` ${v}m` : " ？m"); }
+/* 矢印を引いたら、図面のすぐ下に長さを入れる欄を出す（数字はお客様が入れる） */
+let bubK = null;
+function openBub(k) {
+  if (!arrows[k] || !nat.w) return;
+  bubK = k;
+  const b = $("#arBub");
+  $("#arBubL").textContent = k === "w" ? "幅" : "奥行";
+  $("#arBubL").style.color = AR_COLOR[k];
+  b.style.borderLeftColor = AR_COLOR[k];
+  $("#arBubIn").value = $(k === "w" ? "#w" : "#d").value;
+  b.hidden = false;
+  $("#arBubIn").focus();
+}
+function closeBub() {
+  if (!bubK) return;
+  const k = bubK; bubK = null; $("#arBub").hidden = true;
+  if (k === "w" && !arrows.d) setMode("d");
+}
+$("#arBubIn").addEventListener("input", () => { if (!bubK) return; $(bubK === "w" ? "#w" : "#d").value = $("#arBubIn").value; update(); });
+$("#arBubIn").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); closeBub(); } });
+$("#arBubOk").addEventListener("click", closeBub);
+function arrowSvg(a, k) {
+  if (!a || !nat.w) return "";
+  const W = nat.w, H = nat.h, s = Math.max(W, H);
+  const x1 = a.x1 * W, y1 = a.y1 * H, x2 = a.x2 * W, y2 = a.y2 * H;
+  const ang = Math.atan2(y2 - y1, x2 - x1), c = Math.cos(ang), sn = Math.sin(ang);
+  const hl = s * 0.03, hw = s * 0.017, sw = s * 0.008;
+  const head = (x, y, dc, ds) => { const bx = x - dc * hl, by = y - ds * hl; return `${x},${y} ${bx - ds * hw},${by + dc * hw} ${bx + ds * hw},${by - dc * hw}`; };
+  let nx = -sn, ny = c; if (ny > 0 || (ny === 0 && nx > 0)) { nx = -nx; ny = -ny; }
+  const vert = Math.abs(c) < 0.5;  /* たての矢印は、文字を矢印の左にそろえる */
+  if (vert) { nx = -1; ny = 0; }
+  const off = s * (vert ? 0.02 : 0.04), mx = (x1 + x2) / 2 + nx * off, my = (y1 + y2) / 2 + ny * off;
+  const anchor = vert ? (nx < 0 ? "end" : "start") : "middle";
+  const col = AR_COLOR[k];
+  return `<g><line x1="${x1 + c * hl * .6}" y1="${y1 + sn * hl * .6}" x2="${x2 - c * hl * .6}" y2="${y2 - sn * hl * .6}" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"/>`
+    + `<polygon points="${head(x2, y2, c, sn)}" fill="${col}"/><polygon points="${head(x1, y1, -c, -sn)}" fill="${col}"/>`
+    + `<text x="${mx}" y="${my}" font-size="${s * 0.046}" font-weight="700" text-anchor="${anchor}" dominant-baseline="middle" fill="${col}" stroke="#fff" stroke-width="${s * 0.014}" paint-order="stroke" font-family="Noto Sans JP, sans-serif">${arLabel(k)}</text></g>`;
+}
+function renderArrows() {
+  const svg = $("#arSvg");
+  if (nat.w) svg.setAttribute("viewBox", `0 0 ${nat.w} ${nat.h}`);
+  svg.innerHTML = arrowSvg(arrows.w, "w") + arrowSvg(arrows.d, "d") + (drawing ? arrowSvg(drawing, arMode) : "");
+}
+function setMode(k) {
+  arMode = k;
+  if (k) { bubK = null; $("#arBub").hidden = true; }
+  document.querySelectorAll(".atools .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.a === k));
+  $("#arStage").classList.toggle("on", !!k);
+  $("#arTip").hidden = !k;
+  if (k) $("#arTip").textContent = `図面の上を指でなぞって、${k === "w" ? "幅" : "奥行"}の矢印を引いてください。`;
+}
+function syncPlan() {
+  const src = files.plan[0] || "";
+  const isImg = src && !src.startsWith("data:image/svg");
+  $("#arBox").hidden = !isImg;
+  $("#arEmpty").hidden = !!isImg;
+  $("#arEmpty").textContent = src && !isImg ? "PDFの図面には矢印を引けません。写真やスクリーンショットで入れると引けます。" : "間取り図を入れると、ここに図面が出ます。";
+  if (src === arSrc) return;
+  arSrc = src; arrows.w = arrows.d = null; nat.w = nat.h = 0; bubK = null; $("#arBub").hidden = true; setMode(null);
+  if (isImg) { const img = $("#arImg"); img.onload = () => { nat.w = img.naturalWidth; nat.h = img.naturalHeight; renderArrows(); }; img.src = src; }
+  renderArrows();
+}
+function stagePoint(e) {
+  const r = $("#arStage").getBoundingClientRect();
+  return {x: Math.min(Math.max(e.clientX - r.left, 0), r.width), y: Math.min(Math.max(e.clientY - r.top, 0), r.height), rw: r.width, rh: r.height};
+}
+let p0 = null;
+$("#arStage").addEventListener("pointerdown", e => {
+  if (!arMode || !nat.w || e.target.closest(".abub")) return;
+  e.preventDefault(); $("#arStage").setPointerCapture(e.pointerId);
+  p0 = stagePoint(e);
+});
+$("#arStage").addEventListener("pointermove", e => {
+  if (!p0) return;
+  const p = stagePoint(e);
+  let dx = p.x - p0.x, dy = p.y - p0.y;
+  if (Math.abs(dy) < Math.abs(dx) * 0.2) dy = 0; else if (Math.abs(dx) < Math.abs(dy) * 0.2) dx = 0;  /* ほぼ水平・垂直なら、まっすぐにそろえる */
+  drawing = {x1: p0.x / p.rw, y1: p0.y / p.rh, x2: (p0.x + dx) / p.rw, y2: (p0.y + dy) / p.rh};
+  renderArrows();
+});
+function endDraw() {
+  if (!p0) return;
+  const r = $("#arStage").getBoundingClientRect();
+  if (drawing && Math.hypot((drawing.x2 - drawing.x1) * r.width, (drawing.y2 - drawing.y1) * r.height) > 24) {
+    const k = arMode;
+    arrows[k] = drawing;
+    drawing = null; p0 = null; setMode(null);
+    renderArrows(); openBub(k); return;
+  } else { drawing = null; p0 = null; }
+  renderArrows();
+}
+$("#arStage").addEventListener("pointerup", endDraw);
+$("#arStage").addEventListener("pointercancel", () => { p0 = null; drawing = null; renderArrows(); });
+document.querySelectorAll(".atools .chip").forEach(b => b.addEventListener("click", () => setMode(arMode === b.dataset.a ? null : b.dataset.a)));
+$("#arClr").addEventListener("click", () => { arrows.w = arrows.d = null; bubK = null; $("#arBub").hidden = true; setMode(null); renderArrows(); });
+
+function update() {
+  syncPlan(); renderArrows();
+  renderSizesIfChanged();
+  const n = REQ.filter(filled).length;
+  $("#count").textContent = `${n} / ${REQ.length}`;
+  $("#bar").style.width = `${n / REQ.length * 100}%`;
+  $("#send").disabled = n < REQ.length;
+  $("#left").textContent = n < REQ.length ? `あと${REQ.length - n}つ入れると送れます` : "無料です。送ったあとで直すときは、LINEでお知らせください。";
+  REQ.forEach(k => { if (filled(k)) document.querySelector(`fieldset[data-k="${k}"]`).classList.remove("bad"); });
+}
+let lastKeep = "";
+function renderSizesIfChanged() { const k = chosen("keep").join(","); if (k !== lastKeep) { lastKeep = k; renderSizes(); } }
+function thumbs(k) {
+  const box = $(k === "plan" ? "#planTh" : "#tasteTh");
+  box.innerHTML = "";
+  files[k].forEach((src, i) => {
+    const f = document.createElement("figure");
+    f.innerHTML = `<img alt="" src="${src}"><button type="button" aria-label="消す">×</button>`;
+    f.querySelector("button").onclick = () => { files[k].splice(i, 1); thumbs(k); update(); };
+    box.appendChild(f);
+  });
+}
+function read(input, k, max) {
+  input.addEventListener("change", () => {
+    [...input.files].slice(0, max - files[k].length).forEach(file => {
+      if (!file.type.startsWith("image/")) { files[k].push("data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="#F2EFE8"/><text x="48" y="54" font-size="14" text-anchor="middle" fill="#77736A">PDF</text></svg>')); thumbs(k); update(); return; }
+      const r = new FileReader();
+      r.onload = () => { files[k].push(r.result); thumbs(k); update(); };
+      r.readAsDataURL(file);
+    });
+    input.value = "";
+  });
+}
+read($("#planIn"), "plan", 2);
+read($("#tasteIn"), "taste", 3);
+
+document.querySelectorAll(".chips").forEach(g => {
+  g.addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    const on = b.getAttribute("aria-pressed") === "true";
+    if (g.hasAttribute("data-one")) g.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", "false"));
+    if (g.hasAttribute("data-many")) {
+      if (b.hasAttribute("data-none")) g.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", "false"));
+      else g.querySelector("[data-none]").setAttribute("aria-pressed", "false");
+    }
+    b.setAttribute("aria-pressed", on && !g.hasAttribute("data-one") ? "false" : (on ? "false" : "true"));
+    update();
+  });
+});
+document.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", "false"));
+["#w", "#d"].forEach(s => $(s).addEventListener("input", update));
+
+$("#send").addEventListener("click", () => {
+  const miss = REQ.filter(k => !filled(k));
+  if (miss.length) { miss.forEach(k => document.querySelector(`fieldset[data-k="${k}"]`).classList.add("bad")); document.querySelector(`fieldset[data-k="${miss[0]}"]`).scrollIntoView({behavior: "smooth", block: "center"}); return; }
+  const rows = [
+    ["間取り図", `${files.plan.length}枚`], ["いちばん大きいお部屋", `幅${$("#w").value}m × 奥行${$("#d").value}m`],
+    ["測ったところ", arrows.w && arrows.d ? "図面に矢印あり（幅・奥行）" : arrows.w ? "図面に矢印あり（幅だけ）" : arrows.d ? "図面に矢印あり（奥行だけ）" : "矢印なし"],
+    ["好きなお部屋の写真", `${files.taste.length}枚`],
+    ["住む人数", chosen("people").join("")], ["家具のご予算", chosen("budget").join("")], ["そのまま使う家具", chosen("keep").map(sizeText).join("・")],
+    ["時期", chosen("when").join("")], ["大事にしたいこと", [chosen("wish").join(""), $("#memo").value].filter(Boolean).join("／") || "—"]
+  ];
+  $("#sum").innerHTML = rows.map(([a, b]) => `<div><dt>${a}</dt><dd></dd></div>`).join("");
+  $("#sum").querySelectorAll("dd").forEach((dd, i) => dd.textContent = rows[i][1]);
+  const fig = $("#sumFig");
+  if (nat.w && (arrows.w || arrows.d)) {
+    fig.innerHTML = `<div class="stage"><img alt="矢印を引いた間取り図" src="${arSrc}"><svg viewBox="0 0 ${nat.w} ${nat.h}" aria-hidden="true">${arrowSvg(arrows.w, "w")}${arrowSvg(arrows.d, "d")}</svg></div><figcaption>この図面も一緒に届きます。</figcaption>`;
+    fig.hidden = false;
+  } else { fig.hidden = true; fig.innerHTML = ""; }
+  $("#formView").hidden = true; $("#foot").hidden = true; $("#doneView").hidden = false;
+  window.scrollTo({top: 0});
+});
+$("#back").addEventListener("click", e => { e.preventDefault(); $("#doneView").hidden = true; $("#formView").hidden = false; $("#foot").hidden = false; });
+
+if ($("#fill")) $("#fill").addEventListener("click", () => {
+  files.plan = [EX.fp]; files.taste = [EX.ts]; thumbs("plan"); thumbs("taste");
+  $("#w").value = "4.8"; $("#d").value = "3.6";
+  const pick = (k, labels) => document.querySelectorAll(`fieldset[data-k="${k}"] .chip`).forEach(b => b.setAttribute("aria-pressed", labels.includes(b.textContent) ? "true" : "false"));
+  pick("people", ["1人"]); pick("budget", ["50〜100万円"]); pick("keep", ["テレビ"]); pick("when", ["1〜2か月後"]); pick("wish", ["落ち着ける"]);
+  $("#memo").value = "豆柴と暮らしています。";
+  sizes["テレビ"] = {inch: "55"};
+  lastKeep = ""; update();
+  arrows.w = {x1: 0.15, y1: 0.585, x2: 0.638, y2: 0.585};
+  arrows.d = {x1: 0.585, y1: 0.548, x2: 0.585, y2: 0.88};
+  renderArrows();
+});
+update();
+</script>
