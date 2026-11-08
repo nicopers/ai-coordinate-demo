@@ -118,7 +118,7 @@ fieldset.bad .q { color: var(--warn); }
       <div class="en">AI INTERIOR COORDINATE</div>
       <h1>間取り図を送ると、<br>インテリアのご提案が届きます。</h1>
       <p>AIがつくったご提案のたたき台を、nicomadeのスタッフが目を通してから、このLINEにお送りします。</p>
-      <ul><li>無料・入力は3分ほど</li><li>当日〜翌営業日にお届け</li><li>商品名と価格は、ご相談のあとにお出しします</li></ul>
+      <ul><li>無料・入力は3分ほど</li><li>ご提案は1部屋です</li><li>当日〜翌営業日にお届け</li><li>商品名と価格は、ご相談のあとにお出しします</li></ul>
     </section>
 
     <form id="f" novalidate>
@@ -131,12 +131,14 @@ fieldset.bad .q { color: var(--warn); }
       </fieldset>
 
       <fieldset data-k="size">
-        <div class="q">いちばん大きいお部屋の広さ<small class="req">必須</small></div>
-        <p class="hint">ふつうはリビングです。壁から壁まで、だいたいで大丈夫です。</p>
+        <div class="q">ご提案するお部屋（1部屋）<small class="req">必須</small></div>
+        <p class="hint">AIのご提案は1部屋だけです。いちばん長く過ごすお部屋を選んでください。</p>
+        <div class="chips" data-one><button type="button" class="chip">リビング（LDK）</button><button type="button" class="chip">寝室</button><button type="button" class="chip">ワンルーム</button><button type="button" class="chip">そのほかのお部屋</button></div>
+        <p class="hint" style="margin:14px 0 8px">そのお部屋の広さを、cmで入れてください。壁から壁まで、だいたいで大丈夫です。</p>
         <div class="size">
-          <label for="w">幅<span class="unit"><input id="w" inputmode="decimal" placeholder="4.8"><span>m</span></span></label>
+          <label for="w">幅<span class="unit"><input id="w" inputmode="numeric" placeholder="480"><span>cm</span></span></label>
           <span class="x">×</span>
-          <label for="d">奥行<span class="unit"><input id="d" inputmode="decimal" placeholder="3.6"><span>m</span></span></label>
+          <label for="d">奥行<span class="unit"><input id="d" inputmode="numeric" placeholder="360"><span>cm</span></span></label>
         </div>
         <div class="arw">
           <p class="lead">図面の上に、測ったところを矢印で引いてください</p>
@@ -149,7 +151,7 @@ fieldset.bad .q { color: var(--warn); }
               <button type="button" class="clr" id="arClr">矢印を消す</button>
             </div>
             <div class="stage" id="arStage"><img id="arImg" alt="間取り図"><svg id="arSvg" aria-hidden="true"></svg><div class="tip" id="arTip" hidden></div></div>
-            <div class="abub" id="arBub" hidden><b id="arBubL">幅</b><span>の長さ</span><span class="unit"><input id="arBubIn" inputmode="decimal" placeholder="—" aria-label="矢印の長さ"><span>m</span></span><button type="button" id="arBubOk">OK</button></div>
+            <div class="abub" id="arBub" hidden><b id="arBubL">幅</b><span>の長さ</span><span class="unit"><input id="arBubIn" inputmode="numeric" placeholder="—" aria-label="矢印の長さ"><span>cm</span></span><button type="button" id="arBubOk">OK</button></div>
           </div>
         </div>
       </fieldset>
@@ -228,7 +230,7 @@ const $ = (s, r = document) => r.querySelector(s);
 function chosen(k) { return [...document.querySelectorAll(`fieldset[data-k="${k}"] > .chips > .chip[aria-pressed="true"]`)].map(b => b.textContent); }
 function filled(k) {
   if (k === "plan" || k === "taste") return files[k].length > 0;
-  if (k === "size") return +$("#w").value > 0 && +$("#d").value > 0;
+  if (k === "size") return chosen("size").length > 0 && +$("#w").value > 0 && +$("#d").value > 0;
   return chosen(k).length > 0;
 }
 const sizes = {};
@@ -279,7 +281,7 @@ const arrows = {w: null, d: null};
 const nat = {w: 0, h: 0};
 let arMode = null, drawing = null, arSrc = "";
 const AR_COLOR = {w: "#3C6E9A", d: "#A0522D"};
-function arLabel(k) { const v = $(k === "w" ? "#w" : "#d").value; return (k === "w" ? "幅" : "奥行") + (+v > 0 ? ` ${v}m` : " ？m"); }
+function arLabel(k) { const v = $(k === "w" ? "#w" : "#d").value; return (k === "w" ? "幅" : "奥行") + (+v > 0 ? ` ${v}cm` : " ？cm"); }
 /* 矢印を引いたら、図面のすぐ下に長さを入れる欄を出す（数字はお客様が入れる） */
 let bubK = null;
 function openBub(k) {
@@ -311,7 +313,18 @@ function arrowSvg(a, k) {
   let nx = -sn, ny = c; if (ny > 0 || (ny === 0 && nx > 0)) { nx = -nx; ny = -ny; }
   const vert = Math.abs(c) < 0.5;  /* たての矢印は、文字を矢印の左にそろえる */
   if (vert) { nx = -1; ny = 0; }
-  const off = s * (vert ? 0.02 : 0.04), mx = (x1 + x2) / 2 + nx * off, my = (y1 + y2) / 2 + ny * off;
+  /* 2本の矢印のまん中が近い（斜めに交わる など）ときは、文字を矢印の端寄りにずらして重ならないようにする */
+  const o = arrows[k === "w" ? "d" : "w"];
+  let t = 0.5;
+  if (o && o !== a && Math.hypot(((o.x1 + o.x2) / 2 - (a.x1 + a.x2) / 2) * W, ((o.y1 + o.y2) / 2 - (a.y1 + a.y2) / 2) * H) < s * 0.15) {
+    if (k === "w") t = 0.25;
+    else {  /* 奥行の文字は、幅の文字から遠い方の端に置く */
+      const wx = (o.x1 + (o.x2 - o.x1) * 0.25) * W, wy = (o.y1 + (o.y2 - o.y1) * 0.25) * H;
+      const dist = u => Math.hypot((x1 + (x2 - x1) * u - wx) / 4, y1 + (y2 - y1) * u - wy);  /* 文字は横に長いので、上下に離れている方を選ぶ */
+      t = dist(0.25) > dist(0.75) ? 0.25 : 0.75;
+    }
+  }
+  const off = s * (vert ? 0.02 : 0.04), mx = x1 + (x2 - x1) * t + nx * off, my = y1 + (y2 - y1) * t + ny * off;
   const anchor = vert ? (nx < 0 ? "end" : "start") : "middle";
   const col = AR_COLOR[k];
   return `<g><line x1="${x1 + c * hl * .6}" y1="${y1 + sn * hl * .6}" x2="${x2 - c * hl * .6}" y2="${y2 - sn * hl * .6}" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"/>`
@@ -432,7 +445,7 @@ $("#send").addEventListener("click", () => {
   const miss = REQ.filter(k => !filled(k));
   if (miss.length) { miss.forEach(k => document.querySelector(`fieldset[data-k="${k}"]`).classList.add("bad")); document.querySelector(`fieldset[data-k="${miss[0]}"]`).scrollIntoView({behavior: "smooth", block: "center"}); return; }
   const rows = [
-    ["間取り図", `${files.plan.length}枚`], ["いちばん大きいお部屋", `幅${$("#w").value}m × 奥行${$("#d").value}m`],
+    ["間取り図", `${files.plan.length}枚`], ["ご提案するお部屋", `${chosen("size").join("")}（幅${$("#w").value}cm × 奥行${$("#d").value}cm）`],
     ["測ったところ", arrows.w && arrows.d ? "図面に矢印あり（幅・奥行）" : arrows.w ? "図面に矢印あり（幅だけ）" : arrows.d ? "図面に矢印あり（奥行だけ）" : "矢印なし"],
     ["好きなお部屋の写真", `${files.taste.length}枚`],
     ["住む人数", chosen("people").join("")], ["家具のご予算", chosen("budget").join("")], ["そのまま使う家具", chosen("keep").map(sizeText).join("・")],
@@ -452,9 +465,9 @@ $("#back").addEventListener("click", e => { e.preventDefault(); $("#doneView").h
 
 if ($("#fill")) $("#fill").addEventListener("click", () => {
   files.plan = [EX.fp]; files.taste = [EX.ts]; thumbs("plan"); thumbs("taste");
-  $("#w").value = "4.8"; $("#d").value = "3.6";
+  $("#w").value = "480"; $("#d").value = "360";
   const pick = (k, labels) => document.querySelectorAll(`fieldset[data-k="${k}"] .chip`).forEach(b => b.setAttribute("aria-pressed", labels.includes(b.textContent) ? "true" : "false"));
-  pick("people", ["1人"]); pick("budget", ["50〜100万円"]); pick("keep", ["テレビ"]); pick("when", ["1〜2か月後"]); pick("wish", ["落ち着ける"]);
+  pick("size", ["リビング（LDK）"]); pick("people", ["1人"]); pick("budget", ["50〜100万円"]); pick("keep", ["テレビ"]); pick("when", ["1〜2か月後"]); pick("wish", ["落ち着ける"]);
   $("#memo").value = "豆柴と暮らしています。";
   sizes["テレビ"] = {inch: "55"};
   lastKeep = ""; update();
