@@ -102,6 +102,32 @@ fieldset.bad .q { color: var(--warn); }
 .abub .unit input { font-size: 16px; padding: 6px 7px; }
 .abub button { font: inherit; font-size: 12.5px; font-weight: 700; background: var(--charcoal); color: #F3EFE6; border: 0; padding: 7px 11px; cursor: pointer; }
 .arw .empty { font-size: 12px; color: var(--mute); background: var(--white); border: 1px dashed #CFC6B5; padding: 14px 12px; margin: 6px 0 0; text-align: center; }
+.res { width: 100%; text-align: left; display: grid; gap: 14px; margin-top: 8px; }
+.res .rh { text-align: center; font-family: var(--f-head); font-size: 17px; letter-spacing: .06em; margin: 6px 0 0; }
+.res .rh small { display: block; font-family: var(--f-body); font-size: 11.5px; color: var(--mute); letter-spacing: 0; margin-top: 2px; }
+.pg { background: var(--white); border: 1px solid var(--line); padding: 16px; display: grid; gap: 10px; }
+.pg .no { font-family: Georgia, serif; font-size: 10.5px; letter-spacing: .28em; color: var(--blue); }
+.pg h3 { font-family: var(--f-head); font-weight: 500; font-size: 17px; letter-spacing: .05em; margin: 0; line-height: 1.5; }
+.pg p { font-size: 13px; color: #4A4740; margin: 0; }
+.pg .cover { background: var(--charcoal); color: #F3EFE6; padding: 22px 16px; display: grid; gap: 6px; }
+.pg .cover b { font-family: var(--f-head); font-weight: 500; font-size: 20px; letter-spacing: .06em; }
+.pg .cover span { font-size: 12px; color: #CFC8B9; }
+.sw { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sw div { display: grid; gap: 4px; font-size: 11.5px; color: var(--mute); line-height: 1.4; }
+.sw i { display: block; aspect-ratio: 1 / 1; border: 1px solid rgba(0,0,0,.08); }
+.sw b { color: var(--ink); font-weight: 500; font-size: 12px; }
+.plan svg { width: 100%; height: auto; display: block; background: #FBFAF7; }
+.pg .flist { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+.flist li { border-bottom: 1px solid var(--line); padding: 10px 0; display: grid; gap: 2px; }
+.flist b { font-weight: 500; font-size: 14px; }
+.flist span { font-size: 12px; color: var(--blue); }
+.flist p { font-size: 12.5px; }
+.flist .own b, .flist .own span { color: var(--mute); }
+.done .back { font-size: 13px; color: var(--mute); }
+.pg ul { margin: 0; padding-left: 1.2em; font-size: 13px; color: #4A4740; }
+.pg .cta { display: block; text-align: center; background: var(--linegreen); color: #fff; font-weight: 700; padding: 12px; text-decoration: none; font-size: 14px; }
+.sent { width: 100%; text-align: left; font-size: 13px; }
+.sent summary { cursor: pointer; color: var(--blue); padding: 6px 0; }
 .sumfig { width: 100%; margin: 0; }
 .sumfig figcaption { font-size: 12px; color: var(--mute); text-align: left; margin-top: 6px; }
 @media (prefers-reduced-motion: reduce) { .prog i { transition: none; } }
@@ -210,9 +236,12 @@ fieldset.bad .q { color: var(--warn); }
     <div class="mark">&#10003;</div>
     <h2>受け付けました</h2>
     <p>当日〜翌営業日に、<br>このLINEにご提案のたたき台をお送りします。</p>
-    <dl id="sum"></dl>
-    <figure class="sumfig" id="sumFig" hidden></figure>
-    <a class="line" href="#" id="back">LINEに戻る</a>
+    <div class="res" id="res"></div>
+    <details class="sent"><summary>送った内容を見る</summary>
+      <dl id="sum"></dl>
+      <figure class="sumfig" id="sumFig" hidden></figure>
+    </details>
+    <a class="back" href="#" id="back">入力画面に戻る</a>
   </div>
 </div>
 
@@ -441,6 +470,87 @@ document.querySelectorAll(".chips").forEach(g => {
 document.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", "false"));
 ["#w", "#d"].forEach(s => $(s).addEventListener("input", update));
 
+/* 送ったあとに出す「届くたたき台（見本）」。選んだお部屋・広さ・そのまま使う家具・大事にしたいことだけを反映し、ほかは決まった見本 */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const FCOL = {
+  "テレビ台": ["ウォルナットの木目", "目線の高さを下げて、部屋を広く見せる低めの台に"],
+  "ソファ": ["グレージュの布", "部屋の主役。壁と床の間の色で、なじませながら存在感を出す"],
+  "ローテーブル": ["ウォルナット", "ソファから手が届く距離。角の丸い形で通り道をじゃましない"],
+  "ラグ": ["アイボリーの織り", "ソファとテーブルの場所を床でまとめ、くつろぐ場所を区切る"],
+  "ダイニングテーブル": ["オーク", "4人がけの大きさ。ソファ側と同じ木の色でそろえる"],
+  "ダイニングチェア": ["ウォルナット・布張り", "座面は布でやわらかく。背の低い形で圧迫感を出さない"],
+  "ベッド": ["オーク・グレージュの布", "頭側を壁につけて、左右から乗り降りできる向きに"],
+  "サイドテーブル": ["ウォルナット", "スマホと本が置ける大きさ。手元の照明もここに"],
+  "チェスト": ["オーク", "腰の高さの収納。上は小物を飾る場所にもなる"],
+  "デスク": ["オーク", "窓からの光が手元に入る向き。奥行50cmで場所を取りすぎない"],
+  "フロアライト": ["真鍮・布のシェード", "天井の照明とは別に、夜は低い位置の灯りで落ち着かせる"]
+};
+const WISH = {"落ち着ける": "落ち着いた色で、ひとつにまとめる", "広く見せたい": "背の低い家具と明るい色で、広く見せる", "おしゃれに": "素材を重ねて、照明で見せる", "使いやすさ": "通り道を広くとって、動きやすく"};
+const COVER = {"落ち着ける": "落ち着いて過ごせる", "広く見せたい": "広く見える", "おしゃれに": "素材で見せる", "使いやすさ": "動きやすい"};
+function layout(room, W, D) {
+  const f = [], add = (name, w, d, x, y, label) => f.push({name, w, d, x: Math.max(0, Math.min(x, W - w)), y: Math.max(0, Math.min(y, D - d)), label: label || name});
+  if (room === "寝室") {
+    const bw = W >= 380 ? 160 : 140;
+    add("ベッド", bw, 200, (W - bw) / 2, 0);
+    add("サイドテーブル", 45, 40, (W - bw) / 2 - 50, 0, "サイド");
+    add("サイドテーブル", 45, 40, (W + bw) / 2 + 5, 0, "サイド");
+    add("チェスト", 90, 45, W - 90, D - 45);
+    if (W >= 320) add("デスク", 100, 50, 0, D - 50);
+  } else if (room === "ワンルーム") {
+    add("ベッド", 100, 200, 0, 0);
+    add("テレビ台", 120, 35, W - 120, 0);
+    add("ソファ", 160, 80, W - 160, D - 80);
+    add("ローテーブル", 80, 45, W - 140, D - 80 - 70);
+    if (D >= 300) add("デスク", 90, 50, 0, D - 50);
+  } else {
+    const lw = W * 0.56, lc = lw / 2, sw = lw >= 230 ? 200 : 160;
+    add("ラグ", Math.min(200, lw - 20), 140, lc - Math.min(200, lw - 20) / 2, D - 85 - 120);
+    add("テレビ台", 160, 40, lc - 80, 0);
+    add("ソファ", sw, 85, lc - sw / 2, D - 85);
+    add("ローテーブル", 100, 50, lc - 50, D - 85 - 95);
+    add("フロアライト", 35, 35, lc + sw / 2 + 5, D - 40, "ライト");
+    const dc = lw + (W - lw) / 2;
+    add("ダイニングテーブル", 80, 140, dc - 40, D / 2 - 70, "ダイニング");
+    [[-88, -55], [-88, 10], [43, -55], [43, 10]].forEach(([dx, dy]) => add("ダイニングチェア", 45, 45, dc + dx, D / 2 + dy, "チェア"));
+  }
+  return f;
+}
+function planSvg(f, W, D, keep) {
+  const pad = Math.max(W, D) * 0.1, fs = Math.max(W, D) * 0.034, s = Math.max(W, D);
+  let g = "";
+  for (let x = 50; x < W; x += 50) g += `<line x1="${x}" y1="0" x2="${x}" y2="${D}" stroke="#EEE9DF" stroke-width="${s * 0.002}"/>`;
+  for (let y = 50; y < D; y += 50) g += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#EEE9DF" stroke-width="${s * 0.002}"/>`;
+  const items = f.map(o => {
+    const own = keep.includes(o.name), rug = o.name === "ラグ";
+    const fill = rug ? "#EFE8DA" : own ? "#FFFFFF" : o.name === "ソファ" || o.name === "ベッド" ? "#D9D1C3" : "#C9B79C";
+    const tall = o.d > o.w * 1.6 && o.w < 70;
+    return `<g><rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.d}" rx="${rug ? 0 : 3}" fill="${fill}" stroke="${own ? "#77736A" : "#8C7B62"}" stroke-width="${s * 0.004}" ${own ? `stroke-dasharray="${s * 0.012} ${s * 0.008}"` : ""}/>`
+      + (o.w >= 40 && !(o.name === "ダイニングチェア") ? `<text x="${o.x + o.w / 2}" y="${o.y + o.d / 2}" font-size="${Math.min(fs, (tall ? o.d : o.w) * 0.85 / o.label.length)}" text-anchor="middle" dominant-baseline="middle" fill="#3A3833" ${tall ? `transform="rotate(-90 ${o.x + o.w / 2} ${o.y + o.d / 2})"` : ""}>${esc(o.label)}</text>` : "") + `</g>`;
+  }).join("");
+  const dim = `<text x="${W / 2}" y="${-pad * 0.35}" font-size="${fs}" text-anchor="middle" fill="#3C6E9A">${W}cm</text><text x="${-pad * 0.35}" y="${D / 2}" font-size="${fs}" text-anchor="middle" fill="#A0522D" transform="rotate(-90 ${-pad * 0.35} ${D / 2})">${D}cm</text>`;
+  return `<svg viewBox="${-pad} ${-pad} ${W + pad * 2} ${D + pad * 2}" role="img" aria-label="家具の配置図">${g}<rect x="0" y="0" width="${W}" height="${D}" fill="none" stroke="#292923" stroke-width="${s * 0.012}"/>${items}${dim}</svg>`;
+}
+function buildResult() {
+  const room = chosen("size")[0] || "リビング（LDK）", key = room.startsWith("リビング") ? "LDK" : room;
+  const W = Math.round(+$("#w").value) || 480, D = Math.round(+$("#d").value) || 360;
+  const keep = chosen("keep"), wish = chosen("wish")[0] || "落ち着ける";
+  const f = layout(key, W, D);
+  const names = [...new Set(f.map(o => o.name))];
+  const rows = names.map(n => {
+    const o = f.find(x => x.name === n), cnt = f.filter(x => x.name === n).length, own = keep.includes(n);
+    let [col, why] = FCOL[n] || ["—", "—"];
+    if (key === "ワンルーム" && n === "ベッド") why = "壁に沿わせて置き、部屋のまん中を広く空ける";
+    return `<li${own ? ' class="own"' : ""}><b>${esc(n)}${cnt > 1 ? ` ×${cnt}` : ""}</b><span>${own ? "お手持ちの家具" : `幅${o.w} × 奥行${o.d}cm・${esc(col)}`}</span><p>${own ? "お手持ちの家具を、この場所で使います。" : esc(why)}</p></li>`;
+  }).join("");
+  const SW = [["#F4F1EA", "壁", "オフホワイト"], ["#C9A57A", "床", "オーク"], ["#CFC6B6", "ソファ・ベッド", "グレージュの布"], ["#5B4433", "木の家具", "ウォルナット"], ["#8EA0AE", "差し色", "くすんだブルー"], ["#B79A5B", "金物", "真鍮"]];
+  return `<p class="rh">このようなたたき台が届きます<small>見本です。実際は、送っていただいた図面とお好みの写真から作ります。</small></p>`
+    + `<section class="pg"><div class="no">01 COVER</div><div class="cover"><span>${esc(room)}　幅${W} × 奥行${D}cm</span><b>グレージュとウォルナットの、${esc(COVER[wish])}部屋</b><span>考え方：${esc(WISH[wish])}</span></div></section>`
+    + `<section class="pg"><div class="no">02 IMAGE BOARD</div><h3>色と素材</h3><div class="sw">${SW.map(([c, a, b]) => `<div><i style="background:${c}"></i><b>${a}</b>${b}</div>`).join("")}</div><p>実際のたたき台では、ここに家具の写真が入ります。</p></section>`
+    + `<section class="pg plan"><div class="no">03 LAYOUT</div><h3>家具の配置図</h3>${planSvg(f, W, D, keep)}<p>マス目は50cmです。点線は、そのまま使うお手持ちの家具です。</p></section>`
+    + `<section class="pg"><div class="no">04 ITEMS</div><h3>家具の一覧</h3><ul class="flist">${rows}</ul><p>商品名と価格は、ご相談のあとにお出しします。</p></section>`
+    + `<section class="pg"><div class="no">05 NEXT</div><h3>ここから先は、インテリアのプロと</h3><ul><li>実際に買える商品と、価格・在庫の確認</li><li>搬入の通り道と、窓・コンセントの位置の確認</li><li>カーテン・照明・小物まで、仕上げのご提案</li></ul><a class="cta" href="#" onclick="return false">無料相談を申し込む（見本）</a></section>`;
+}
+
 $("#send").addEventListener("click", () => {
   const miss = REQ.filter(k => !filled(k));
   if (miss.length) { miss.forEach(k => document.querySelector(`fieldset[data-k="${k}"]`).classList.add("bad")); document.querySelector(`fieldset[data-k="${miss[0]}"]`).scrollIntoView({behavior: "smooth", block: "center"}); return; }
@@ -458,6 +568,7 @@ $("#send").addEventListener("click", () => {
     fig.innerHTML = `<div class="stage"><img alt="矢印を引いた間取り図" src="${arSrc}"><svg viewBox="0 0 ${nat.w} ${nat.h}" aria-hidden="true">${arrowSvg(arrows.w, "w")}${arrowSvg(arrows.d, "d")}</svg></div><figcaption>この図面も一緒に届きます。</figcaption>`;
     fig.hidden = false;
   } else { fig.hidden = true; fig.innerHTML = ""; }
+  $("#res").innerHTML = buildResult();
   $("#formView").hidden = true; $("#foot").hidden = true; $("#doneView").hidden = false;
   window.scrollTo({top: 0});
 });
