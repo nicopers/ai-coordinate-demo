@@ -128,30 +128,38 @@ fieldset.bad .q { color: var(--warn); }
 .pg .cta { display: block; text-align: center; background: var(--linegreen); color: #fff; font-weight: 700; padding: 12px; text-decoration: none; font-size: 14px; }
 .sent { width: 100%; text-align: left; font-size: 13px; }
 .sent summary { cursor: pointer; color: var(--blue); padding: 6px 0; }
-.sumfig { width: 100%; margin: 0; }
-.sumfig figcaption { font-size: 12px; color: var(--mute); text-align: left; margin-top: 6px; }
+.steps { list-style: none; counter-reset: st; margin: 4px 0 0; padding: 0; width: 100%; text-align: left; display: grid; gap: 10px; }
+.steps li { counter-increment: st; background: var(--white); border: 1px solid var(--line); padding: 14px 14px 14px 52px; position: relative; display: grid; gap: 6px; }
+.steps li::before { content: counter(st); position: absolute; left: 14px; top: 13px; width: 26px; height: 26px; border: 1px solid var(--sand); display: grid; place-items: center; font-family: Georgia, serif; font-size: 14px; color: var(--ink); }
+.steps b { font-weight: 700; font-size: 14.5px; }
+.steps span { font-size: 12.5px; color: #4A4740; }
+.steps .line { justify-self: start; margin-top: 4px; }
+.sv { justify-self: start; font: inherit; font-size: 13px; font-weight: 700; background: var(--charcoal); color: #F3EFE6; border: 0; padding: 9px 16px; cursor: pointer; margin-top: 4px; }
+.done .after { font-size: 13px; }
+.sent pre { white-space: pre-wrap; font: inherit; font-size: 12.5px; background: var(--white); border: 1px solid var(--line); padding: 10px 12px; margin: 4px 0 8px; }
+.cpd { display: block; font-size: 12px; color: var(--mute); margin-top: 4px; }
 @media (prefers-reduced-motion: reduce) { .prog i { transition: none; } }
 </style>
 
-<div class="note"><span>見本です。送っても、どこにも届きません。入れた写真は、この画面の中だけで使います。</span></div>
+<div class="note"><span>試しに動かしている画面です。最後にLINEで送ると、nicomadeに届きます。ここで入れた図面は、この画面の中だけで使います。</span></div>
 
 <div class="app">
-  <div class="bar"><b>nicomade</b><span id="count">0 / 7</span></div>
+  <div class="bar"><b>nicomade</b><span id="count">0 / 5</span></div>
   <div class="prog"><i id="bar"></i></div>
 
   <div id="formView">
     <section class="hero">
       <div class="en">AI INTERIOR COORDINATE</div>
       <h1>間取り図を送ると、<br>インテリアのご提案が届きます。</h1>
-      <p>AIがつくったご提案のたたき台を、nicomadeのスタッフが目を通してから、このLINEにお送りします。</p>
-      <ul><li>無料・入力は3分ほど</li><li>ご提案は1部屋です</li><li>当日〜翌営業日にお届け</li><li>商品名と価格は、ご相談のあとにお出しします</li></ul>
+      <p>AIがつくったご提案のたたき台を、nicomadeのスタッフが目を通してから、LINEでお送りします。</p>
+      <ul><li>無料・入力は3分ほど</li><li>ご提案は1部屋です</li><li>最後に、答えと写真をLINEで送っていただきます</li><li>当日〜翌営業日にお届け</li><li>商品名と価格は、ご相談のあとにお出しします</li></ul>
     </section>
 
     <form id="f" novalidate>
       <div class="sec">01 ROOM</div>
       <fieldset data-k="plan">
-        <div class="q">間取り図<small class="req">必須</small></div>
-        <p class="hint">不動産会社の図面や、スマホで撮った写真で大丈夫です。</p>
+        <div class="q">間取り図<small>任意</small></div>
+        <p class="hint">ここに入れると、図面の上に、測ったところの矢印を引けます。図面は、最後にLINEで送っていただきます。不動産会社の図面や、スマホで撮った写真で大丈夫です。</p>
         <label class="drop"><input type="file" id="planIn" accept="image/*,application/pdf"><b>写真を選ぶ</b>またはここにドラッグ</label>
         <div class="thumbs" id="planTh"></div>
       </fieldset>
@@ -184,10 +192,8 @@ fieldset.bad .q { color: var(--warn); }
 
       <div class="sec">02 TASTE</div>
       <fieldset data-k="taste">
-        <div class="q">好きなお部屋の写真<small class="req">必須</small></div>
-        <p class="hint">1〜3枚。雑誌やSNSのスクリーンショットでも大丈夫です。</p>
-        <label class="drop"><input type="file" id="tasteIn" accept="image/*" multiple><b>写真を選ぶ</b>3枚まで</label>
-        <div class="thumbs" id="tasteTh"></div>
+        <div class="q">好きなお部屋の写真</div>
+        <p class="hint" style="margin:0">1〜3枚を、最後にLINEで送っていただきます。いまのうちに、スマホに保存しておいてください。雑誌やSNSのスクリーンショットでも大丈夫です。</p>
       </fieldset>
 
       <div class="sec">03 LIFE</div>
@@ -233,26 +239,33 @@ fieldset.bad .q { color: var(--warn); }
   </div>
 
   <div id="doneView" class="done" hidden>
-    <div class="mark">&#10003;</div>
-    <h2>受け付けました</h2>
-    <p>当日〜翌営業日に、<br>このLINEにご提案のたたき台をお送りします。</p>
-    <div class="res" id="res"></div>
-    <details class="sent"><summary>送った内容を見る</summary>
-      <dl id="sum"></dl>
-      <figure class="sumfig" id="sumFig" hidden></figure>
+    <h2>あと少しです</h2>
+    <p>答えと写真を、nicomadeのLINEに送ってください。</p>
+    <ol class="steps">
+      <li id="stSave" hidden><b>矢印を入れた図面を保存する</b><span>LINEで送るときに使います。</span><button type="button" class="sv" id="saveBtn">図面を保存する</button></li>
+      <li><b>答えをLINEで送る</b><span>押すと、答えが入った状態でnicomadeのトークが開きます。そのまま送信を押してください。</span><a class="line" id="lineBtn" href="#" target="_blank" rel="noopener">LINEで答えを送る</a></li>
+      <li><b>続けて、写真を送る</b><span>同じトークの写真のボタンから、間取り図（矢印を入れた図面）と、好きなお部屋の写真1〜3枚を送ってください。</span></li>
+    </ol>
+    <p class="after">届いたら、当日〜翌営業日に、ご提案のたたき台をLINEでお送りします。</p>
+    <details class="sent"><summary>LINEに入る文を見る</summary>
+      <pre id="msg"></pre>
+      <button type="button" class="sv" id="copyBtn">文をコピーする</button>
+      <small class="cpd" id="copyMsg"></small>
     </details>
+    <div class="res" id="res"></div>
     <a class="back" href="#" id="back">入力画面に戻る</a>
   </div>
 </div>
 
 <div class="foot" id="foot"><div class="in">
-  <button class="send" id="send" type="button" disabled>この内容で送る</button>
-  <small id="left">あと7つ入れると送れます</small>
+  <button class="send" id="send" type="button" disabled>LINEで送る準備をする</button>
+  <small id="left">あと5つ入れると送れます</small>
 </div></div>
 
 <script>
 const EX = {fp: "", ts: ""};
-const REQ = ["plan", "size", "taste", "people", "budget", "keep", "when"];
+const REQ = ["size", "people", "budget", "keep", "when"];
+const LINE_ID = "@419arezv";  /* 住まいの公式LINE */
 const files = {plan: [], taste: []};
 const $ = (s, r = document) => r.querySelector(s);
 
@@ -425,7 +438,7 @@ function update() {
   $("#count").textContent = `${n} / ${REQ.length}`;
   $("#bar").style.width = `${n / REQ.length * 100}%`;
   $("#send").disabled = n < REQ.length;
-  $("#left").textContent = n < REQ.length ? `あと${REQ.length - n}つ入れると送れます` : "無料です。送ったあとで直すときは、LINEでお知らせください。";
+  $("#left").textContent = n < REQ.length ? `あと${REQ.length - n}つ入れると送れます` : "無料です。次の画面で、LINEに送ります。";
   REQ.forEach(k => { if (filled(k)) document.querySelector(`fieldset[data-k="${k}"]`).classList.remove("bad"); });
 }
 let lastKeep = "";
@@ -451,8 +464,7 @@ function read(input, k, max) {
     input.value = "";
   });
 }
-read($("#planIn"), "plan", 2);
-read($("#tasteIn"), "taste", 3);
+read($("#planIn"), "plan", 1);
 
 document.querySelectorAll(".chips").forEach(g => {
   g.addEventListener("click", e => {
@@ -554,28 +566,58 @@ function buildResult() {
 $("#send").addEventListener("click", () => {
   const miss = REQ.filter(k => !filled(k));
   if (miss.length) { miss.forEach(k => document.querySelector(`fieldset[data-k="${k}"]`).classList.add("bad")); document.querySelector(`fieldset[data-k="${miss[0]}"]`).scrollIntoView({behavior: "smooth", block: "center"}); return; }
-  const rows = [
-    ["間取り図", `${files.plan.length}枚`], ["ご提案するお部屋", `${chosen("size").join("")}（幅${$("#w").value}cm × 奥行${$("#d").value}cm）`],
-    ["測ったところ", arrows.w && arrows.d ? "図面に矢印あり（幅・奥行）" : arrows.w ? "図面に矢印あり（幅だけ）" : arrows.d ? "図面に矢印あり（奥行だけ）" : "矢印なし"],
-    ["好きなお部屋の写真", `${files.taste.length}枚`],
-    ["住む人数", chosen("people").join("")], ["家具のご予算", chosen("budget").join("")], ["そのまま使う家具", chosen("keep").map(sizeText).join("・")],
-    ["時期", chosen("when").join("")], ["大事にしたいこと", [chosen("wish").join(""), $("#memo").value].filter(Boolean).join("／") || "—"]
+  /* LINEに入る文。社内の作成画面が「ラベル：値」で読み取るので、ラベルと区切り（、）を変えない */
+  const memo = $("#memo").value.replace(/\s+/g, " ").trim();
+  const lines = [
+    "【AIコーディネートのお申し込み】",
+    `お部屋：${chosen("size").join("")}`,
+    `広さ：幅${Math.round(+$("#w").value)}cm × 奥行${Math.round(+$("#d").value)}cm`,
+    `住む人数：${chosen("people").join("")}`,
+    `家具のご予算：${chosen("budget").join("")}`,
+    `そのまま使う家具：${chosen("keep").map(sizeText).join("、")}`,
+    `時期：${chosen("when").join("")}`
   ];
-  $("#sum").innerHTML = rows.map(([a, b]) => `<div><dt>${a}</dt><dd></dd></div>`).join("");
-  $("#sum").querySelectorAll("dd").forEach((dd, i) => dd.textContent = rows[i][1]);
-  const fig = $("#sumFig");
-  if (nat.w && (arrows.w || arrows.d)) {
-    fig.innerHTML = `<div class="stage"><img alt="矢印を引いた間取り図" src="${arSrc}"><svg viewBox="0 0 ${nat.w} ${nat.h}" aria-hidden="true">${arrowSvg(arrows.w, "w")}${arrowSvg(arrows.d, "d")}</svg></div><figcaption>この図面も一緒に届きます。</figcaption>`;
-    fig.hidden = false;
-  } else { fig.hidden = true; fig.innerHTML = ""; }
+  if (chosen("wish").length) lines.push(`大事にしたいこと：${chosen("wish").join("")}`);
+  if (memo) lines.push(`ほかに：${memo}`);
+  lines.push("", "このあと、間取り図と好きなお部屋の写真を送ります。");
+  const msg = lines.join("\n");
+  $("#msg").textContent = msg;
+  $("#lineBtn").href = `https://line.me/R/oaMessage/${LINE_ID}/?${encodeURIComponent(msg)}`;
+  $("#copyMsg").textContent = "";
+  $("#stSave").hidden = !(nat.w && (arrows.w || arrows.d));
   $("#res").innerHTML = buildResult();
   $("#formView").hidden = true; $("#foot").hidden = true; $("#doneView").hidden = false;
   window.scrollTo({top: 0});
 });
 $("#back").addEventListener("click", e => { e.preventDefault(); $("#doneView").hidden = true; $("#formView").hidden = false; $("#foot").hidden = false; });
 
+/* 矢印を入れた図面を1枚の画像にして保存する（スマホは共有の画面から「画像を保存」やLINEに直接送れる） */
+function planPng() {
+  const load = src => new Promise((ok, ng) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ng; i.src = src; });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${nat.w}" height="${nat.h}" viewBox="0 0 ${nat.w} ${nat.h}">${arrowSvg(arrows.w, "w")}${arrowSvg(arrows.d, "d")}</svg>`;
+  return Promise.all([load(arSrc), load("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg))]).then(([base, over]) => new Promise((ok, ng) => {
+    const k = Math.min(1, 2400 / Math.max(nat.w, nat.h));
+    const c = document.createElement("canvas"); c.width = Math.round(nat.w * k); c.height = Math.round(nat.h * k);
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(base, 0, 0, c.width, c.height); g.drawImage(over, 0, 0, c.width, c.height);
+    c.toBlob(b => b ? ok(b) : ng(new Error("blob")), "image/jpeg", 0.9);
+  }));
+}
+$("#saveBtn").addEventListener("click", async () => {
+  try {
+    const file = new File([await planPng()], "間取り図_矢印つき.jpg", {type: "image/jpeg"});
+    if (navigator.canShare && navigator.canShare({files: [file]})) { try { await navigator.share({files: [file]}); } catch (e) {} return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } catch (e) { alert("図面を保存できませんでした。図面の写真を、そのままLINEで送ってください。"); }
+});
+$("#copyBtn").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("#msg").textContent); $("#copyMsg").textContent = "コピーしました。nicomadeのLINEのトークに貼って送ってください。"; }
+  catch (e) { $("#copyMsg").textContent = "コピーできませんでした。上の文を長押しして選んでください。"; }
+});
+
 if ($("#fill")) $("#fill").addEventListener("click", () => {
-  files.plan = [EX.fp]; files.taste = [EX.ts]; thumbs("plan"); thumbs("taste");
+  files.plan = [EX.fp]; thumbs("plan");
   $("#w").value = "480"; $("#d").value = "360";
   const pick = (k, labels) => document.querySelectorAll(`fieldset[data-k="${k}"] .chip`).forEach(b => b.setAttribute("aria-pressed", labels.includes(b.textContent) ? "true" : "false"));
   pick("size", ["リビング（LDK）"]); pick("people", ["1人"]); pick("budget", ["50〜100万円"]); pick("keep", ["テレビ"]); pick("when", ["1〜2か月後"]); pick("wish", ["落ち着ける"]);
