@@ -176,7 +176,7 @@ fieldset.bad .q { color: var(--warn); }
         </div>
         <div class="arw">
           <p class="lead">図面の上に、測ったところを矢印で引いてください</p>
-          <p class="hint">ボタンを押してから、図面を指でなぞります。引いたら、その長さ（m）を入れてください。引かなくても送れます。</p>
+          <p class="hint">ボタンを押してから、図面を指でなぞります。引いたら、その長さ（cm）を入れてください。引かなくても送れます。</p>
           <p class="empty" id="arEmpty">間取り図を入れると、ここに図面が出ます。</p>
           <div id="arBox" hidden>
             <div class="atools">
@@ -345,29 +345,41 @@ function closeBub() {
 $("#arBubIn").addEventListener("input", () => { if (!bubK) return; $(bubK === "w" ? "#w" : "#d").value = $("#arBubIn").value; update(); });
 $("#arBubIn").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); closeBub(); } });
 $("#arBubOk").addEventListener("click", closeBub);
-function arrowSvg(a, k) {
+/* 矢印の文字の位置（t＝矢印のどのあたりに置くか）と、文字のおおよその箱 */
+function labelBox(a, k, t) {
+  const W = nat.w, H = nat.h, s = Math.max(W, H), fs = s * 0.046;
+  const x1 = a.x1 * W, y1 = a.y1 * H, x2 = a.x2 * W, y2 = a.y2 * H;
+  const ang = Math.atan2(y2 - y1, x2 - x1), c = Math.cos(ang), sn = Math.sin(ang);
+  let nx = -sn, ny = c; if (ny > 0 || (ny === 0 && nx > 0)) { nx = -nx; ny = -ny; }
+  const vert = Math.abs(c) < 0.5;  /* たての矢印は、文字を矢印の左にそろえる */
+  if (vert) { nx = -1; ny = 0; }
+  const off = s * (vert ? 0.02 : 0.04), mx = x1 + (x2 - x1) * t + nx * off, my = y1 + (y2 - y1) * t + ny * off;
+  const anchor = vert ? (nx < 0 ? "end" : "start") : "middle";
+  const tw = arLabel(k).length * fs * 0.9, th = fs * 1.3;
+  const left = anchor === "middle" ? mx - tw / 2 : anchor === "end" ? mx - tw : mx;
+  return {mx, my, anchor, l: left, r: left + tw, t: my - th / 2, b: my + th / 2};
+}
+/* 2本の文字が重ならない置き方を選ぶ（重なる組み合わせしか無ければ、いちばん離れる組み合わせ） */
+function labelTs(aw, ad) {
+  if (!aw || !ad) return {w: 0.5, d: 0.5};
+  let best = null;
+  for (const tw of [0.5, 0.25, 0.75]) for (const td of [0.5, 0.75, 0.25]) {
+    const p = labelBox(aw, "w", tw), q = labelBox(ad, "d", td);
+    const gx = Math.max(p.l - q.r, q.l - p.r), gy = Math.max(p.t - q.b, q.t - p.b);
+    const gap = Math.max(gx, gy);
+    if (gap > 0) return {w: tw, d: td};
+    if (!best || gap > best.gap) best = {w: tw, d: td, gap};
+  }
+  return best;
+}
+function arrowSvg(a, k, t = 0.5) {
   if (!a || !nat.w) return "";
   const W = nat.w, H = nat.h, s = Math.max(W, H);
   const x1 = a.x1 * W, y1 = a.y1 * H, x2 = a.x2 * W, y2 = a.y2 * H;
   const ang = Math.atan2(y2 - y1, x2 - x1), c = Math.cos(ang), sn = Math.sin(ang);
   const hl = s * 0.03, hw = s * 0.017, sw = s * 0.008;
   const head = (x, y, dc, ds) => { const bx = x - dc * hl, by = y - ds * hl; return `${x},${y} ${bx - ds * hw},${by + dc * hw} ${bx + ds * hw},${by - dc * hw}`; };
-  let nx = -sn, ny = c; if (ny > 0 || (ny === 0 && nx > 0)) { nx = -nx; ny = -ny; }
-  const vert = Math.abs(c) < 0.5;  /* たての矢印は、文字を矢印の左にそろえる */
-  if (vert) { nx = -1; ny = 0; }
-  /* 2本の矢印のまん中が近い（斜めに交わる など）ときは、文字を矢印の端寄りにずらして重ならないようにする */
-  const o = arrows[k === "w" ? "d" : "w"];
-  let t = 0.5;
-  if (o && o !== a && Math.hypot(((o.x1 + o.x2) / 2 - (a.x1 + a.x2) / 2) * W, ((o.y1 + o.y2) / 2 - (a.y1 + a.y2) / 2) * H) < s * 0.15) {
-    if (k === "w") t = 0.25;
-    else {  /* 奥行の文字は、幅の文字から遠い方の端に置く */
-      const wx = (o.x1 + (o.x2 - o.x1) * 0.25) * W, wy = (o.y1 + (o.y2 - o.y1) * 0.25) * H;
-      const dist = u => Math.hypot((x1 + (x2 - x1) * u - wx) / 4, y1 + (y2 - y1) * u - wy);  /* 文字は横に長いので、上下に離れている方を選ぶ */
-      t = dist(0.25) > dist(0.75) ? 0.25 : 0.75;
-    }
-  }
-  const off = s * (vert ? 0.02 : 0.04), mx = x1 + (x2 - x1) * t + nx * off, my = y1 + (y2 - y1) * t + ny * off;
-  const anchor = vert ? (nx < 0 ? "end" : "start") : "middle";
+  const {mx, my, anchor} = labelBox(a, k, t);
   const col = AR_COLOR[k];
   return `<g><line x1="${x1 + c * hl * .6}" y1="${y1 + sn * hl * .6}" x2="${x2 - c * hl * .6}" y2="${y2 - sn * hl * .6}" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"/>`
     + `<polygon points="${head(x2, y2, c, sn)}" fill="${col}"/><polygon points="${head(x1, y1, -c, -sn)}" fill="${col}"/>`
@@ -376,7 +388,10 @@ function arrowSvg(a, k) {
 function renderArrows() {
   const svg = $("#arSvg");
   if (nat.w) svg.setAttribute("viewBox", `0 0 ${nat.w} ${nat.h}`);
-  svg.innerHTML = arrowSvg(arrows.w, "w") + arrowSvg(arrows.d, "d") + (drawing ? arrowSvg(drawing, arMode) : "");
+  /* 引き直している最中は、同じ種類の前の矢印を隠す（文字が2つ重ならないように） */
+  const aw = drawing && arMode === "w" ? drawing : arrows.w, ad = drawing && arMode === "d" ? drawing : arrows.d;
+  const t = labelTs(aw, ad);
+  svg.innerHTML = arrowSvg(aw, "w", t.w) + arrowSvg(ad, "d", t.d);
 }
 function setMode(k) {
   arMode = k;
@@ -594,7 +609,7 @@ $("#back").addEventListener("click", e => { e.preventDefault(); $("#doneView").h
 /* 矢印を入れた図面を1枚の画像にして保存する（スマホは共有の画面から「画像を保存」やLINEに直接送れる） */
 function planPng() {
   const load = src => new Promise((ok, ng) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ng; i.src = src; });
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${nat.w}" height="${nat.h}" viewBox="0 0 ${nat.w} ${nat.h}">${arrowSvg(arrows.w, "w")}${arrowSvg(arrows.d, "d")}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${nat.w}" height="${nat.h}" viewBox="0 0 ${nat.w} ${nat.h}">${(t => arrowSvg(arrows.w, "w", t.w) + arrowSvg(arrows.d, "d", t.d))(labelTs(arrows.w, arrows.d))}</svg>`;
   return Promise.all([load(arSrc), load("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg))]).then(([base, over]) => new Promise((ok, ng) => {
     const k = Math.min(1, 2400 / Math.max(nat.w, nat.h));
     const c = document.createElement("canvas"); c.width = Math.round(nat.w * k); c.height = Math.round(nat.h * k);
